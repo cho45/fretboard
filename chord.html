@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+		<title>Lookup chord from fretboard</title>
+
+		<link rev="made" href="mailto:cho45@lowreal.net">
+		<link rel="preconnect" href="https://fonts.googleapis.com">
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+		<link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
+		<link href="https://fonts.googleapis.com/css2?family=Roboto+Serif:opsz@8..144&display=swap" rel="stylesheet">
+
+		<link href="https://cdn.jsdelivr.net/npm/@mdi/font@5.x/css/materialdesignicons.min.css" rel="stylesheet">
+		<link href="https://cdn.jsdelivr.net/npm/vuetify@3.4.4/dist/vuetify.min.css" rel="stylesheet">
+
+		<script src="lib/vue.global.js" defer></script>
+		<script src="https://cdn.jsdelivr.net/npm/vuetify@3.4.4/dist/vuetify.min.js" defer></script>
+		<script src="chord.js" type="module" defer></script>
+		<style>
+			.dot-text {
+				fill: #fff;
+			}
+
+			.dot-in-box .dot-text {
+				fill: #fff;
+			}
+
+			img.note {
+				margin: 0 2px;
+			}
+
+			kbd {
+				font-family: Roboto;
+				padding: 0.2em 0.5em;
+				border: 1px solid #ccc;
+				border-radius: 3px;
+				font-size: 90%;
+			}
+
+			table {
+				line-height: 1.5;
+				width: 100%;
+			}
+
+			table td {
+				padding: 10px;
+			}
+
+			tbody tr:nth-of-type(odd) {
+				background-color: #f0f0f0;
+			}
+
+			.grade {
+				font-family: 'Roboto Serif', serif;
+			}
+
+			.chord-name {
+				font-weight: bold;
+				margin: 5px;
+				padding: 0.5em 0.5em;
+				border: 1px solid #ccc;
+				border-radius: 3px;
+				font-size: 90%;
+				background: #fff;
+			}
+
+			.key-name ,
+			.note-name {
+				margin: 5px;
+				padding: 0.5em 0.5em;
+				border: 1px solid #ccc;
+				border-radius: 3px;
+				font-size: 90%;
+				background: #fff;
+			}
+
+			.note-name.existing {
+				font-weight: bold;
+				background-color: #fff;
+			}
+
+			.v-btn {
+				margin: 0 5px;
+			}
+
+			.btn-group {
+				padding: 0 10px;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="app">
+			<v-app id="inspire">
+				<!-- v-navigation-drawer
+					model-value
+					class="pt-4"
+					color="grey-lighten-3"
+					rail
+					>
+					<v-avatar
+						v-for="n in 6"
+						:key="n"
+						:color="`grey-${n === 1 ? 'darken' : 'lighten'}-1`"
+						:size="n === 1 ? 36 : 20"
+						class="d-block text-center mx-auto mb-9"
+						></v-avatar>
+				</v-navigation-drawer -->
+
+				<v-main style="">
+					<v-container style="max-width: 1600px">
+						<h1>Lookup chord from fretboard</h1>
+						<figure id="fretboard"></figure>
+						<div class="d-flex" style="margin-top: -10px; padding: 20px 5px;">
+							<div class="btn-group">
+								<v-btn prepend-icon="mdi-cancel" @click="clearDots()">Clear</v-btn>
+							</div>
+							<div class="btn-group">
+								<v-btn prepend-icon="mdi-arrow-left" @click="lowerFret()">Lower Fret</v-btn>
+								<v-btn prepend-icon="mdi-arrow-right" @click="higherFret()"> Higher Fret</v-btn>
+							</div>
+							<div class="btn-group">
+								<v-btn prepend-icon="mdi-arrow-down" @click="lowerString()"> Lower String</v-btn>
+								<v-btn prepend-icon="mdi-arrow-up" @click="higherString()"> Higher String</v-btn>
+							</div>
+						</div>
+						<table>
+							<thead>
+								<template v-if="true">
+									<tr>
+										<th>Name</th>
+										<th>Weight</th>
+										<th>Chord Notes</th>
+										<th>is a diatonic chord of key</th>
+									</tr>
+								</template>
+							</thead>
+							<tbody>
+								<template  v-for="chord in foundChords">
+									<tr :title="chord.name">
+										<td>
+											<span class="chord-name" v-for="name in chord.names.slice(0, 1)"
+												:style="{ color: noteColor(chord.tonic, 50, 30) }"
+												>
+												{{formatNote(name)}}
+											</span>
+										</td>
+										<td>
+											{{ (chord.weight * 100).toFixed(0) }}%
+										</td>
+										<td>
+											<span class="note-name"
+												:class="{ existing: chordNote.existing, missing: !chordNote.existing }"
+												:style="{ color: noteColor(chordNote.name, 50, 30) }"
+												 v-for="chordNote in chord.chordNotes"
+												>
+												{{ formatNote(chordNote.name) }} ({{ chordNote.interval }}) {{ chordNote.existing ? '' : '*' }}
+											</span>
+										</td>
+										<td>
+											<span class="key-name" v-for="key in chord.chordKeys">
+												{{ formatNote(key.key) }} (<span class="grade">{{ formatGrade(key.grade) }}</span>)
+											</span>
+										</td>
+									</tr>
+								</template>
+							</tbody>
+						</table>
+						<p>
+							weight は notes の一致度合いを示す。100% が最大値。ただしベース音が違う場合は 0.99 倍している。
+						</p>
+					</v-container>
+				</v-main>
+
+			</v-app>
+		</div>
+	</body>
+</html>

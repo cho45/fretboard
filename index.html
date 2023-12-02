@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+		<title>Fretboard</title>
+
+		<link rev="made" href="mailto:cho45@lowreal.net">
+		<link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
+		<link href="https://cdn.jsdelivr.net/npm/@mdi/font@5.x/css/materialdesignicons.min.css" rel="stylesheet">
+		<link href="https://cdn.jsdelivr.net/npm/vuetify@3.3.2/dist/vuetify.min.css" rel="stylesheet">
+
+		<script src="lib/vue.global.js" defer></script>
+		<script src="https://cdn.jsdelivr.net/npm/vuetify@3.3.2/dist/vuetify.min.js" defer></script>
+		<script src="script.js" type="module" defer></script>
+		<style>
+			.dot-text {
+				fill: #999;
+			}
+
+			.dot-in-box .dot-text {
+				fill: #fff;
+			}
+
+			img.note {
+				margin: 0 2px;
+			}
+
+			kbd {
+				font-family: Roboto;
+				padding: 0.2em 0.5em;
+				border: 1px solid #ccc;
+				border-radius: 3px;
+				font-size: 90%;
+			}
+
+			.bpm .v-text-field input {
+				font-size: 200%;
+			}
+
+			.buttons .v-btn {
+				min-width: 50px;
+			}
+
+			.flash {
+				animation-duration: 0.1s;
+				animation-name: a-flash;
+				animation-iteration-count: 1;
+				animation-timing-function: linear;
+			}
+
+			@keyframes a-flash {
+				0% {
+					opacity: 0;
+					background: #000000;
+				}
+
+				90% {
+					opacity: 0;
+					background: #000000;
+				}
+
+				100% {
+					opacity: 1;
+					background: #ffffff;
+				}
+			}
+
+
+			@media (prefers-reduced-motion: reduce) {
+				.flash {
+					animation: none;
+				}
+			}
+
+
+			.keyboard-shortcut {
+				display: none;
+			}
+
+			@media (hover: hover) and (pointer: fine) {
+				.keyboard-shortcut {
+					display: block;
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<div id="app">
+			<v-app id="inspire">
+				<!-- v-navigation-drawer
+					model-value
+					class="pt-4"
+					color="grey-lighten-3"
+					rail
+					>
+					<v-avatar
+						v-for="n in 6"
+						:key="n"
+						:color="`grey-${n === 1 ? 'darken' : 'lighten'}-1`"
+						:size="n === 1 ? 36 : 20"
+						class="d-block text-center mx-auto mb-9"
+						></v-avatar>
+				</v-navigation-drawer -->
+
+				<v-main style="">
+					<v-container style="width: 1600px">
+						<h1>
+							{{boxForm}} Form
+						</h1>
+						<h2>{{root}} Major Pentatonic Scale</h2>
+						<figure id="fretboard-pentatonic"></figure>
+						<h2>{{root}} Major Scale /  Pentatonic+4+7</h2>
+						<figure id="fretboard-major"></figure>
+						<h2>{{root}} Major Scale / William Leavitt/Berklee system</h2>
+						<figure id="fretboard-major2"></figure>
+
+						<v-container>
+							<v-row>
+								<v-col>
+									<v-select
+										label="Root"
+										v-model="root"
+										:items="roots"
+										return-object
+										single-line
+										prepend-icon="mdi-music-accidental-double-flat"
+										></v-select>
+								</v-col>
+								<v-col>
+									<v-container class="d-flex">
+										<v-btn @click="prevBox()">Prev Box</v-btn>
+										<v-btn @click="nextBox()">Next Box</v-btn>
+									</v-container>
+								</v-col>
+								<v-col>
+									<v-checkbox v-model="useOpenString" label="Use Open String"></v-checkbox>
+								</v-col>
+							</v-row>
+						</v-container>
+
+
+						<!-- v-select
+							label="Scale"
+							v-model="scale"
+							:items="scales"
+							return-object
+							single-line
+							prepend-icon="mdi-music-clef-treble"
+							></v-select>
+						</div -->
+					</v-container>
+				</v-main>
+
+			</v-app>
+		</div>
+	</body>
+</html>
