@@ -178,7 +178,7 @@ Vue.createApp({
 
 		const commonOpts = {
 			stringWidth: [1, 1, 1, 1.5, 2, 2.5],
-			fretCount: 17,
+			fretCount: 22,
 			fretWidth: 1.5,
 			fretColor: '#999999',
 			nutWidth: 7,

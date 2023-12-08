@@ -341,24 +341,66 @@ Vue.createApp({
 
 		loadHashParams: function () {
 			const params = new URLSearchParams(location.hash.substring(1));
-			
-			for (let string = 1; string <= 6; string++) {
-				if (params.has(string)) {
-					const fret = params.get(string);
-					this.selectDot(+fret, +string);
-				}
+
+			if (params.get('c')) {
+				const current = params.get('c');
+				this.deserializeDots(current).forEach( (i) => {
+					this.selectDot(i.fret, i.string);
+				});
 			}
 		},
 
 		updateHashParams: function () {
 			const params = new URLSearchParams(location.hash.substring(1));
-			for (let string = 1; string <= 6; string++) {
-				params.delete(string);
-			}
-			this.dots.forEach( (i) => {
-				params.set(i.string, i.fret);
-			});
+
+			const current = this.serializeDots();
+
+			params.set('c', current);
+
 			history.replaceState(null, "", "#" + params.toString());
+		},
+
+		serializeDots: function () {
+			const dots = Array.from(this.dots);
+			const singleDigit = dots.every( (i) => i.fret < 10);
+			const map = dots.reduce( (r, i) => r.set(i.string, i.fret) , new Map());
+			console.log({dots, singleDigit, map});
+			return [6, 5, 4, 3, 2, 1].map( (string) => {
+				if (singleDigit) {
+					return map.has(string) ? map.get(string) : 'x'
+				} else {
+					return map.has(string) ? String(map.get(string) + 100).slice(1) : 'xx'
+				}
+			}).join('');
+		},
+
+		deserializeDots: function (str) {
+			let splitted;
+			const twoDigit = str.match(/(..)/g);
+			if (twoDigit.length === 6) {
+				splitted = twoDigit;
+			} else {
+				const oneDigit = str.match(/(.)/g);
+				if (oneDigit.length === 6) {
+					splitted = oneDigit;
+				} else {
+					console.log(`error on parsing ${str}`);
+					return [];
+				}
+			}
+
+			const ret = [];
+			splitted.forEach( (i, string) => {
+				const fret = +i;
+				console.log({fret, string});
+				if (!isNaN(fret)) {
+					ret.push({
+						fret,
+						string: 6 - string,
+					});
+				}
+			});
+			return ret;
 		},
 
 		formatNote: function (str) {
