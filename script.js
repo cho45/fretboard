@@ -132,17 +132,17 @@ Vue.createApp({
 			root: "C",
 			roots: [
 				"C",
-				"G",
-				"D",
-				"A",
-				"E",
-				"B",
-				"F#",
 				"C#",
-				"Ab",
+				"D",
 				"Eb",
+				"E",
+				"F",
+				"F#",
+				"G",
+				"Ab",
+				"A",
 				"Bb",
-				"F"
+				"B",
 			],
 			scale: "major pentatonic",
 			scales: [
@@ -221,6 +221,20 @@ Vue.createApp({
 				: `hsl(${Note.get(note).chroma / 12 * 360}, 50%, 40%, 100%)`
 		};
 
+		this.fretboardAll = new Fretboard({
+			...commonOpts,
+			el: '#fretboard-all',
+			dotText: ({ note, octave, interval }) => `${Note.enharmonic(note)}`,
+			dotStrokeColor: ({ note }) =>
+				Note.get(note).chroma !== Note.get(this.root).chroma
+				? "#ffffff"
+				: "#000000",
+			dotFill: ({ note }) =>
+				Note.get(note).chroma !== Note.get(this.root).chroma
+				? `hsl(${Note.get(note).chroma / 12 * 360}, 50%, 90%, 90%)`
+				: `hsl(${Note.get(note).chroma / 12 * 360}, 50%, 40%, 100%)`
+		});
+
 		this.fretboardPentatonic = new Fretboard({
 			el: '#fretboard-pentatonic',
 			...commonOpts
@@ -272,6 +286,12 @@ Vue.createApp({
 				"ArrowLeft" : () => {
 					this.prevBox();
 				},
+				"ArrowUp" : () => {
+					this.prevRoot();
+				},
+				"ArrowDown" : () => {
+					this.nextRoot();
+				},
 			}[key];
 			if (func) {
 				func();
@@ -282,7 +302,11 @@ Vue.createApp({
 
 	methods: {
 		updateFretboard: function () {
-			const { fretboardPentatonic, fretboardMajor, fretboardMajor2 } = this;
+			const { fretboardAll, fretboardPentatonic, fretboardMajor, fretboardMajor2 } = this;
+			fretboardAll.renderScale({
+				type: 'chromatic',
+			});
+
 			fretboardPentatonic.renderScale({
 				type: this.scale,
 				root: this.root,
@@ -367,6 +391,14 @@ Vue.createApp({
 
 		nextBox: function () {
 			this.box = (this.box + 1) % 5;
+		},
+
+		prevRoot: function () {
+			this.root = this.roots[(this.roots.indexOf(this.root) - 1 + this.roots.length) % this.roots.length];
+		},
+
+		nextRoot: function () {
+			this.root = this.roots[(this.roots.indexOf(this.root) + 1) % this.roots.length];
 		},
 
 

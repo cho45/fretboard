@@ -15,6 +15,10 @@
 		<script src="https://cdn.jsdelivr.net/npm/vuetify@3.3.2/dist/vuetify.min.js" defer></script>
 		<script src="script.js" type="module" defer></script>
 		<style>
+			#fretboard-all .dot-text {
+				fill: #fff;
+			}
+
 			.dot-text {
 				fill: #999;
 			}
@@ -29,6 +33,8 @@
 
 			kbd {
 				font-family: Roboto;
+				font-size: 80%;
+				margin: 0 0.5em;
 				padding: 0.2em 0.5em;
 				border: 1px solid #ccc;
 				border-radius: 3px;
@@ -39,8 +45,9 @@
 				font-size: 200%;
 			}
 
-			.buttons .v-btn {
+			.v-btn {
 				min-width: 50px;
+				margin: 5px;
 			}
 
 			.flash {
@@ -106,6 +113,33 @@
 
 				<v-main style="">
 					<v-container style="width: 1600px">
+
+						<v-container>
+							<v-row>
+								<v-col cols="12" md="2">
+									<v-select
+										label="Root"
+										v-model="root"
+										:items="roots"
+										return-object
+										density="comfortable"
+										prepend-icon="mdi-music-accidental-double-flat"
+										></v-select>
+								</v-col>
+								<v-col cols="12" md="4">
+									<v-btn variant="tonal" @click="prevRoot()">Prev Root <kbd>↑</kbd></v-btn>
+									<v-btn variant="tonal" @click="nextRoot()">Next Root <kbd>↓</kbd></v-btn>
+								</v-col>
+								<v-col cols="12" md="4">
+									<v-btn variant="tonal" @click="prevBox()">Prev Box <kbd>←</kbd></v-btn>
+									<v-btn variant="tonal" @click="nextBox()">Next Box <kbd>→</kbd></v-btn>
+								</v-col>
+								<v-col cols="12" md="2">
+									<v-checkbox v-model="useOpenString" label="Use Open String"></v-checkbox>
+								</v-col>
+							</v-row>
+						</v-container>
+						<figure id="fretboard-all"></figure>
 						<h1>
 							{{boxForm}} Form
 						</h1>
@@ -115,30 +149,6 @@
 						<figure id="fretboard-major"></figure>
 						<h2>{{root}} Major Scale / William Leavitt/Berklee system</h2>
 						<figure id="fretboard-major2"></figure>
-
-						<v-container>
-							<v-row>
-								<v-col>
-									<v-select
-										label="Root"
-										v-model="root"
-										:items="roots"
-										return-object
-										single-line
-										prepend-icon="mdi-music-accidental-double-flat"
-										></v-select>
-								</v-col>
-								<v-col>
-									<v-container class="d-flex">
-										<v-btn @click="prevBox()">Prev Box</v-btn>
-										<v-btn @click="nextBox()">Next Box</v-btn>
-									</v-container>
-								</v-col>
-								<v-col>
-									<v-checkbox v-model="useOpenString" label="Use Open String"></v-checkbox>
-								</v-col>
-							</v-row>
-						</v-container>
 
 
 						<!-- v-select

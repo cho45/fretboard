@@ -40,6 +40,10 @@
 				font-size: 90%;
 			}
 
+			.chord-set {
+				padding: 5px;
+			}
+
 			table {
 				line-height: 1.5;
 				width: 100%;
@@ -89,6 +93,18 @@
 			.btn-group {
 				padding: 0 10px;
 			}
+
+			tr.chord:hover {
+				background-color: #f0f0f0;
+			}
+
+			tr.chord .add-button {
+				visibility: hidden;
+			}
+
+			tr.chord:hover .add-button {
+				visibility: visible;
+			}
 		</style>
 	</head>
 	<body>
@@ -112,6 +128,14 @@
 				<v-main style="">
 					<v-container style="max-width: 1600px">
 						<h1>Lookup chord from fretboard</h1>
+						<div v-if="chordSet.length" class="chord-set">
+							Set:
+							<span class="chord-name" v-for="c in chordSet"
+								:style="{ color: noteColor(c.tonic, 50, 30) }"
+								@click="selectChord(c)"
+								 >{{ c.name }}
+							</span>
+						</div>
 						<figure id="fretboard"></figure>
 						<div class="d-flex" style="margin-top: -10px; padding: 20px 5px;">
 							<div class="btn-group">
@@ -139,13 +163,15 @@
 							</thead>
 							<tbody>
 								<template  v-for="chord in foundChords">
-									<tr :title="chord.name">
+									<tr :title="chord.name" class="chord">
 										<td>
 											<span class="chord-name" v-for="name in chord.names.slice(0, 1)"
 												:style="{ color: noteColor(chord.tonic, 50, 30) }"
 												>
 												{{formatNote(name)}}
 											</span>
+											<v-btn class="add-button" icon="mdi-plus" size="x-small" @click="addToSet(chord)" v-if="!isInChordSet(chord)"></v-btn>
+											<v-btn class="add-button" icon="mdi-minus" size="x-small" @click="removeFromSet(chord)" v-else></v-btn>
 										</td>
 										<td>
 											{{ (chord.weight * 100).toFixed(0) }}%
@@ -168,9 +194,14 @@
 								</template>
 							</tbody>
 						</table>
-						<p>
+						<ul>
+							<li>
 							weight は notes の一致度合いを示す。100% が最大値。ただしベース音が違う場合は 0.99 倍している。
-						</p>
+							</li>
+							<li>
+								diatonic chord of key はメジャーキーとハーモニックマイナーのみを対象としている。
+							</li>
+						</ul>
 					</v-container>
 				</v-main>
 

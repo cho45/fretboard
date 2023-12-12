@@ -127,6 +127,8 @@ Vue.createApp({
 		return {
 			dots: [],
 			foundChords: [],
+
+			chordSet: [],
 		}
 	},
 
@@ -270,6 +272,14 @@ Vue.createApp({
 
 			this.fretboard.setDots(this.dots).render();
 			this.updateFoundChords();
+			this.updateHashParams();
+		},
+
+		selectChord: function (chord) {
+			this.dots = [];
+			for (let dot of chord.dots) {
+				this.selectDot(dot.fret, dot.string);
+			}
 		},
 
 		lowerFret: function () {
@@ -283,6 +293,7 @@ Vue.createApp({
 			}
 			this.fretboard.setDots(this.dots).render();
 			this.updateFoundChords();
+			this.updateHashParams();
 		},
 
 		higherFret: function () {
@@ -296,6 +307,7 @@ Vue.createApp({
 			}
 			this.fretboard.setDots(this.dots).render();
 			this.updateFoundChords();
+			this.updateHashParams();
 		},
 
 		lowerString: function () {
@@ -308,6 +320,7 @@ Vue.createApp({
 			}
 			this.fretboard.setDots(this.dots).render();
 			this.updateFoundChords();
+			this.updateHashParams();
 		},
 
 		higherString: function () {
@@ -320,24 +333,56 @@ Vue.createApp({
 			}
 			this.fretboard.setDots(this.dots).render();
 			this.updateFoundChords();
+			this.updateHashParams();
 		},
 
 		clearDots: function () {
 			this.dots.length = 0;
 			this.fretboard.setDots(this.dots).render();
 			this.updateFoundChords();
+			this.updateHashParams();
 		},
 
 		updateFoundChords: function () {
-			console.log(this.dots.map( (i) => i.note));
-			const found = searchChordByNotes(this.dots.map( (i) => i.note )).slice(0, 30);
-			for (let chord of found) {
-				// chord.chordNotes
-				chord.chordKeys = searchKeys(Chord.get(chord.names[0]));
+			clearTimeout(this.updateFoundChordsTimer);
+			this.updateFoundChordsTimer = setTimeout(async () => {
+				const found = searchChordByNotes(this.dots.map( (i) => i.note )).slice(0, 30);
+				for await (let chord of found) {
+					// chord.chordNotes
+					chord.chordKeys = searchKeys(Chord.get(chord.names[0]));
+				}
+				this.foundChords = found;
+			}, 100);
+		},
+
+		addToSet: function (chord) {
+			console.log('addToSet', chord);
+			const chordDots = {
+				...chord,
+				name: chord.names[0],
+				dots: Array.from(this.dots),
+			};
+			if (this.chordSet.some( (i) => i.name === chordDots.name)) {
+				return;
 			}
-			this.foundChords = found;
+			this.chordSet.push(chordDots);
 			this.updateHashParams();
 		},
+
+		removeFromSet: function (chord) {
+			console.log('removeFromSet', chord);
+			const index = this.chordSet.findIndex( (i) => i.name === chord.names[0]);
+			if (index !== -1) {
+				this.chordSet.splice(index, 1);
+				this.updateHashParams();
+			}
+		},
+
+		isInChordSet: function (chord) {
+			const name = chord.names[0];
+			return this.chordSet.some( (i) => i.name === name);
+		},
+
 
 		loadHashParams: function () {
 			const params = new URLSearchParams(location.hash.substring(1));
@@ -348,23 +393,42 @@ Vue.createApp({
 					this.selectDot(i.fret, i.string);
 				});
 			}
+
+			if (params.get('s')) {
+				const set = params.getAll('s');
+				for (let s of set) {
+					const splitted = s.split('-');
+					const name = splitted.pop();
+					const dots = this.deserializeDots(splitted.join(''));
+					const chord = Chord.get(name);
+					this.chordSet.push({
+						...chord,
+						name,
+						dots,
+					});
+				}
+				this.updateHashParams();
+			}
 		},
 
 		updateHashParams: function () {
 			const params = new URLSearchParams(location.hash.substring(1));
 
-			const current = this.serializeDots();
-
+			const current = this.serializeDots(this.dots);
 			params.set('c', current);
+
+			params.delete('s');
+			for (let c of this.chordSet) {
+				const s = this.serializeDots(c.dots);
+				params.append('s', `${s}-${c.name}`);
+			}
 
 			history.replaceState(null, "", "#" + params.toString());
 		},
 
-		serializeDots: function () {
-			const dots = Array.from(this.dots);
+		serializeDots: function (dots) {
 			const singleDigit = dots.every( (i) => i.fret < 10);
 			const map = dots.reduce( (r, i) => r.set(i.string, i.fret) , new Map());
-			console.log({dots, singleDigit, map});
 			return [6, 5, 4, 3, 2, 1].map( (string) => {
 				if (singleDigit) {
 					return map.has(string) ? map.get(string) : 'x'
@@ -392,7 +456,6 @@ Vue.createApp({
 			const ret = [];
 			splitted.forEach( (i, string) => {
 				const fret = +i;
-				console.log({fret, string});
 				if (!isNaN(fret)) {
 					ret.push({
 						fret,
