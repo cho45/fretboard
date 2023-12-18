@@ -73,6 +73,7 @@
 
 			.key-name ,
 			.note-name {
+				white-space: nowrap;
 				margin: 5px;
 				padding: 0.5em 0.5em;
 				border: 1px solid #ccc;
@@ -133,7 +134,7 @@
 							<span class="chord-name" v-for="c in chordSet"
 								:style="{ color: noteColor(c.tonic, 50, 30) }"
 								@click="selectChord(c)"
-								 >{{ c.name }}
+								 >{{ formatNote(c.name) }}
 							</span>
 						</div>
 						<figure id="fretboard"></figure>
@@ -170,8 +171,8 @@
 												>
 												{{formatNote(name)}}
 											</span>
-											<v-btn class="add-button" icon="mdi-plus" size="x-small" @click="addToSet(chord)" v-if="!isInChordSet(chord)"></v-btn>
-											<v-btn class="add-button" icon="mdi-minus" size="x-small" @click="removeFromSet(chord)" v-else></v-btn>
+											<v-btn title="Add to set" class="add-button" icon="mdi-plus" size="x-small" @click="addToSet(chord)" v-if="!isInChordSet(chord)"></v-btn>
+											<v-btn title="Remove from set" class="add-button" icon="mdi-minus" size="x-small" @click="removeFromSet(chord)" v-else></v-btn>
 										</td>
 										<td>
 											{{ (chord.weight * 100).toFixed(0) }}%

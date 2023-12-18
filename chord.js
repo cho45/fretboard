@@ -269,10 +269,25 @@ Vue.createApp({
 			} else {
 				this.dots.splice(existing, 1);
 			}
-
-			this.fretboard.setDots(this.dots).render();
+			this.updateDotsAndMutes();
 			this.updateFoundChords();
 			this.updateHashParams();
+		},
+
+		updateDotsAndMutes: function () {
+			const mutes = new Set([1, 2, 3, 4, 5, 6]);
+			this.dots.forEach( (i) => {
+				mutes.delete(i.string);
+			});
+			console.log('mutes', Array.from(mutes.values()));
+			this.fretboard.wrapper.selectAll('.muted-string').remove();
+			this.fretboard.muteStrings({
+				strings: Array.from(mutes.values()),
+				width: 20,
+				stringWidth: 3,
+				stroke: "#333"
+			})
+			this.fretboard.setDots(this.dots).render();
 		},
 
 		selectChord: function (chord) {
@@ -291,7 +306,7 @@ Vue.createApp({
 				dot.fret--;
 				dot.note = fretboardNotes[dot.string - 1][dot.fret];
 			}
-			this.fretboard.setDots(this.dots).render();
+			this.updateDotsAndMutes();
 			this.updateFoundChords();
 			this.updateHashParams();
 		},
@@ -305,7 +320,7 @@ Vue.createApp({
 				dot.fret++;
 				dot.note = fretboardNotes[dot.string - 1][dot.fret];
 			}
-			this.fretboard.setDots(this.dots).render();
+			this.updateDotsAndMutes();
 			this.updateFoundChords();
 			this.updateHashParams();
 		},
@@ -318,7 +333,7 @@ Vue.createApp({
 				}
 				dot.note = fretboardNotes[dot.string - 1][dot.fret];
 			}
-			this.fretboard.setDots(this.dots).render();
+			this.updateDotsAndMutes();
 			this.updateFoundChords();
 			this.updateHashParams();
 		},
@@ -331,14 +346,14 @@ Vue.createApp({
 				}
 				dot.note = fretboardNotes[dot.string - 1][dot.fret];
 			}
-			this.fretboard.setDots(this.dots).render();
+			this.updateDotsAndMutes();
 			this.updateFoundChords();
 			this.updateHashParams();
 		},
 
 		clearDots: function () {
 			this.dots.length = 0;
-			this.fretboard.setDots(this.dots).render();
+			this.updateDotsAndMutes();
 			this.updateFoundChords();
 			this.updateHashParams();
 		},
