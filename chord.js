@@ -121,10 +121,40 @@ const fretboardNotes = ['E2', 'A2', 'D3', 'G3', 'B3', 'E4'].reverse().map(n => {
 	});
 });
 
+const DEFAULT_OPTIONS = Object.freeze({
+	overlayScale: false,
+	root: "C",
+	scale: "major",
+});
+
 
 Vue.createApp({
 	data() {
 		return {
+			options: Object.assign({}, DEFAULT_OPTIONS),
+
+			scales: [
+				"major",
+				"minor",
+				"harmonic minor",
+				"major pentatonic",
+				"minor pentatonic",
+			],
+			roots: [
+				"C",
+				"C#",
+				"D",
+				"Eb",
+				"E",
+				"F",
+				"F#",
+				"G",
+				"Ab",
+				"A",
+				"Bb",
+				"B",
+			],
+
 			dots: [],
 			foundChords: [],
 
@@ -136,6 +166,13 @@ Vue.createApp({
 	},
 
 	watch: {
+		options: {
+			handler: function () {
+				this.updateDotsAndMutes();
+				this.updateHashParams();
+			},
+			deep: true
+		}
 	},
 
 	mounted() {
@@ -165,18 +202,22 @@ Vue.createApp({
 			rightPadding: 20,
 			font: "Roboto",
 			dotText: ({ note, octave, interval }) => `${Note.enharmonic(note)}`,
-			dotStrokeColor: ({ interval, moving }) =>
+			dotStrokeColor: ({ interval, moving, selected, outOfScale }) =>
 				moving
 				? "#000000"
-				: "#333333",
+				: selected
+				? outOfScale ? "#666666" : "#333333"
+				: "#ffffff",
 //			dotFill: ({ interval, moving }) =>
 //				moving
 //				? "#999999"
 //				: "#666666"
-			dotFill: ({ interval, moving, note }) =>
+			dotFill: ({ interval, moving, note, selected }) =>
 				moving
 				? "#999999"
-				: `hsl(${Note.get(note).chroma / 12 * 360}, 50%, 40%)`
+				: selected
+				? `hsl(${Note.get(note).chroma / 12 * 360}, 50%, 40%)`
+				: `hsl(${Note.get(note).chroma / 12 * 360}, 50%, 40%, 20%)`
 		};
 
 		this.fretboard = new Fretboard({
@@ -209,13 +250,13 @@ Vue.createApp({
 				dots.push(dot);
 			}
 
-			this.fretboard.setDots(dots).render();
+			this.updateDotsAndMutes(dots);
 		});
 
 		this.fretboard.on('mouseleave', () => {
 			console.log('mouseleave');
 			setTimeout( () => {
-				this.fretboard.setDots(this.dots).render();
+				this.updateDotsAndMutes();
 			}, 100);
 		});
 
@@ -274,12 +315,26 @@ Vue.createApp({
 			this.updateHashParams();
 		},
 
-		updateDotsAndMutes: function () {
+		updateDotsAndMutes: function (dots) {
+			if (!dots) dots = this.dots;
+
 			const mutes = new Set([1, 2, 3, 4, 5, 6]);
 			this.dots.forEach( (i) => {
 				mutes.delete(i.string);
 			});
-			console.log('mutes', Array.from(mutes.values()));
+			this.fretboard.dots = [];
+			if (this.options.overlayScale) {
+				this.fretboard.renderScale({
+					type: this.options.scale,
+					root: this.options.root,
+				});
+			}
+			this.fretboard.dots = this.fretboard.dots.concat(dots.map( (i) => ({
+				...i,
+				selected: true,
+				outOfScale: this.options.overlayScale && !this.fretboard.dots.some( (j) => j.string === i.string && j.fret === i.fret),
+			})));
+			this.fretboard.render();
 			this.fretboard.wrapper.selectAll('.muted-string').remove();
 			this.fretboard.muteStrings({
 				strings: Array.from(mutes.values()),
@@ -287,7 +342,6 @@ Vue.createApp({
 				stringWidth: 3,
 				stroke: "#333"
 			})
-			this.fretboard.setDots(this.dots).render();
 		},
 
 		selectChord: function (chord) {
@@ -424,6 +478,16 @@ Vue.createApp({
 				}
 				this.updateHashParams();
 			}
+
+			for (let [key, value] of Object.entries(this.options)) {
+				if (params.has(key)) {
+					if (typeof value === "boolean") {
+						this.options[key] = params.get(key) === "true";
+					} else {
+						this.options[key] = params.get(key);
+					}
+				}
+			}
 		},
 
 		updateHashParams: function () {
@@ -436,6 +500,13 @@ Vue.createApp({
 			for (let c of this.chordSet) {
 				const s = this.serializeDots(c.dots);
 				params.append('s', `${s}-${c.name}`);
+			}
+
+			for (let [key, value] of Object.entries(this.options)) {
+				params.delete(key);
+				if (DEFAULT_OPTIONS[key] !== value) {
+					params.append(key, value);
+				}
 			}
 
 			history.replaceState(null, "", "#" + params.toString());

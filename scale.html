@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=1000, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+
+		<title>Scale Search</title>
+
+		<link rev="made" href="mailto:cho45@lowreal.net">
+		<link rel="preconnect" href="https://fonts.googleapis.com">
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+		<link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
+		<link href="https://fonts.googleapis.com/css2?family=Roboto+Serif:opsz@8..144&display=swap" rel="stylesheet">
+
+		<link href="https://cdn.jsdelivr.net/npm/@mdi/font@5.x/css/materialdesignicons.min.css" rel="stylesheet">
+		<link href="https://cdn.jsdelivr.net/npm/vuetify@3.4.4/dist/vuetify.min.css" rel="stylesheet">
+
+		<script src="lib/vue.global.js" defer></script>
+		<script src="https://cdn.jsdelivr.net/npm/vuetify@3.4.4/dist/vuetify.min.js" defer></script>
+		<script src="scale.js" type="module" defer></script>
+		<style>
+			.grade {
+				font-family: 'Roboto Serif', serif;
+			}
+
+			.grade-I {
+			}
+
+			.grade-V {
+			}
+
+			.grade-IV {
+			}
+
+			.v-col-x7 {
+				flex: 0 0 14.285714285714286%;
+				max-width: 14.285714285714286%;
+			}
+
+			.key-name ,
+			.chord-name,
+			.note-name {
+				white-space: nowrap;
+				margin: 5px 5px 0 0;
+				font-size: 90%;
+				background: #fff;
+			}
+
+			.scale-chord .grade {
+				font-size: 1.2em;
+				position: absolute;
+				padding: 10px;
+				top: 0;
+				right: 0;
+				color: #555;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="app">
+			<v-app id="inspire">
+				<v-main style="">
+					<v-container style="max-width: 1600px">
+						<h1>Lookup scale from notes or chord</h1>
+						<v-card>
+							<v-tabs v-model="tab">
+								<v-tab value="chords"> Chords </v-tab>
+								<v-tab value="notes"> Notes </v-tab>
+							</v-tabs>
+							<v-card-text>
+								<v-window v-model="tab">
+									<v-window-item value="chords">
+										<v-textarea
+											v-model="chords"
+											label="Chords"
+											placeholder="C Am F G"
+											></v-textarea>
+											<v-container fluid>
+												<v-row class="flex-nowrap" dense>
+													<v-col v-for="chord in foundChords" >
+														<v-card variant="tonal">
+															<template v-slot:title>
+																{{ formatNote(chord.src) }}
+															</template>
+															<template v-slot:subtitle>
+																{{ chord.name }}
+															</template>
+															<template v-slot:text>
+																<span v-for="note in chord.notes"
+																	class="note-name"
+																	:style="{ color: noteColor(note, 50, 30) }"
+																	>
+																	{{ formatNote(note) }}
+																</span>&nbsp;
+															</template>
+														</v-card>
+													</v-col>
+												</v-row>
+											</v-container>
+									</v-window-item>
+									<v-window-item value="notes">
+										<v-textarea
+											v-model="notes"
+											label="Notes"
+											placeholder="C Am F G"
+											></v-textarea>
+									</v-window-item>
+								</v-window>
+							</v-card-text>
+						</v-card>
+
+						<h2>Result</h2>
+						
+						<v-row>
+							<v-col class="v-col-12" v-for="scale in foundScales">
+								<v-card variant="outlined">
+									<template v-slot:title>
+										{{ scale.tonic }} {{ scale.scale.name }}
+										{{ (scale.weight * 100).toFixed() }}%
+									</template>
+									<template v-slot:subtitle>
+										{{ scale.notes.join(" ") }}
+									</template>
+									<template v-slot:text>
+										<v-row dense class="flex-nowrap">
+											<v-col style="" class="v-col-x7" v-for="chord in scale.chords" :class="[`grade-${numberToGrade(chord.grade)}`]">
+												<v-card class="scale-chord" variant="tonal">
+													<template v-slot:title>
+														{{ formatNote(chord.tonic) }}{{ formatNote(chord.aliases[0]) }}
+														<span class="grade">{{formatGrade( chord.quality === 'Major' ? numberToGrade(chord.grade) : numberToGrade(chord.grade).toLowerCase()) }}</span>
+													</template>
+													<template v-slot:subtitle>
+														{{ chord.name }}
+													</template>
+													<template v-slot:text>
+														<span v-for="note in chord.notes"
+															class="note-name"
+															:style="{ color: noteColor(note, 50, 30) }"
+															>
+															{{ formatNote(note) }}
+														</span>&nbsp;
+													</template>
+												</v-card>
+											</v-col>
+										</v-row>
+										<v-row>
+											<v-col>
+												<span class="chord-name" v-for="chord in foundChords">
+													{{ chord.src }}
+												</span>
+												=
+												<span class="chord-name" v-for="chord in foundChords">
+													{{ scale.notes.findIndex(note => note === chord.tonic) + 1 || "?" }}
+												</span>
+											</v-col>
+										</v-row>
+									</template>
+								</v-card>
+							</v-col>
+						</v-row>
+					</v-container>
+				</v-main>
+
+			</v-app>
+		</div>
+	</body>
+</html>
