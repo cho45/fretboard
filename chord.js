@@ -127,6 +127,32 @@ const DEFAULT_OPTIONS = Object.freeze({
 	scale: "major",
 });
 
+async function midiDeviceSend(notes) {
+	function noteOn(note, velocity) {
+		return [0x90, note, velocity];
+	}
+
+	function noteOff(note) {
+		return [0x80, note, 0];
+	}
+
+	const midi = await navigator.requestMIDIAccess();
+	const outputs = midi.outputs;
+
+	if (outputs.size === 0) {
+		console.log('no output devices are found');
+		return;
+	}
+
+	for (let output of outputs.values()) {
+		console.log(output);
+		for (let note of notes) {
+			output.send(noteOn(note, 100));
+			output.send(noteOff(note), window.performance.now() + 500);
+		}
+	}
+}
+
 
 Vue.createApp({
 	data() {
@@ -452,6 +478,12 @@ Vue.createApp({
 			return this.chordSet.some( (i) => i.name === name);
 		},
 
+		sendMIDI: function () {
+			console.log('sendMIDI');
+			const notes = this.dots.map( (i) => Note.get(i.note));
+			console.log(notes);
+			midiDeviceSend(notes.map( (i) => i.midi));
+		},
 
 		loadHashParams: function () {
 			const params = new URLSearchParams(location.hash.substring(1));
@@ -586,7 +618,7 @@ Vue.createApp({
 		noteColor: function (note, s, l) {
 			const h = Note.get(note).chroma / 12 * 360;
 			return `hsl(${h}, ${s}%, ${l}%)`;
-		}
+		},
 	},
 }).use(Vuetify.createVuetify({
 	theme: {
