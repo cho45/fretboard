@@ -63,6 +63,7 @@ function searchChordByNotes(notes) {
 				...chordType,
 				weight,
 				names,
+				base,
 				tonic,
 				chordNotes,
 			};
@@ -122,6 +123,7 @@ const fretboardNotes = ['E2', 'A2', 'D3', 'G3', 'B3', 'E4'].reverse().map(n => {
 });
 
 const DEFAULT_OPTIONS = Object.freeze({
+	capo: 0,
 	overlayScale: false,
 	root: "C",
 	scale: "major",
@@ -189,6 +191,9 @@ Vue.createApp({
 	},
 
 	computed: {
+		capoEnabled: function () {
+			return this.options.capo !== 0;
+		}
 	},
 
 	watch: {
@@ -252,8 +257,43 @@ Vue.createApp({
 		});
 
 		this.fretboard.render();
+		const { wrapper, positions } = this.fretboard;
+		const dotOffset = this.fretboard.getDotOffset();
+		const fretMarkerSize = 20;
+		const fretMarkerColor = "#dddddd";
+		const fretMarkerGroup = wrapper.append('g').attr('class', 'fret-marker-group');
+		fretMarkerGroup
+			.selectAll('circle')
+			.data([
+				{ string: 3, fret: 3 }, 
+				{ string: 3, fret: 5 }, 
+				{ string: 3, fret: 7 }, 
+				{ string: 3, fret: 9 }, 
+				{ string: 2, fret: 12 }, 
+				{ string: 4, fret: 12 }, 
+				{ string: 3, fret: 15 }, 
+				{ string: 3, fret: 17 }, 
+				{ string: 3, fret: 19 }, 
+				{ string: 3, fret: 21 }, 
+				{ string: 2, fret: 24 }, 
+				{ string: 4, fret: 24 }, 
+			])
+			.enter()
+			.filter(({ fret }) => fret >= 0 && fret <= this.fretboard.options.fretCount + dotOffset)
+			.append('circle')
+			.attr('class', 'position-mark')
+			.attr('cx', ({ string, fret }) => `${positions[string - 1][fret - dotOffset].x}%`)
+			.attr('cy', ({ string, fret }) => (positions[string - 1][fret - dotOffset].y + positions[string][fret - dotOffset].y) / 2)
+			.attr('r', fretMarkerSize * 0.5)
+			.attr('fill', fretMarkerColor);
 
 		this.fretboard.on('mousemove', ({ fret, string }) => {
+			if (this.options.capo) {
+				if (fret < this.options.capo) {
+					return;
+				}
+			}
+
 			const note = fretboardNotes[string - 1][fret];
 			const dot = {
 				fret,
@@ -344,6 +384,17 @@ Vue.createApp({
 		updateDotsAndMutes: function (dots) {
 			if (!dots) dots = this.dots;
 
+			this.fretboard.wrapper.selectAll('.barres').remove();
+			if (this.options.capo) {
+				this.fretboard.renderBarres([
+					{
+						fret: this.options.capo,
+						stringFrom: 6,
+						stringTo: 1,
+					}
+				]);
+			}
+
 			const mutes = new Set([1, 2, 3, 4, 5, 6]);
 			this.dots.forEach( (i) => {
 				mutes.delete(i.string);
@@ -361,13 +412,25 @@ Vue.createApp({
 				outOfScale: this.options.overlayScale && !this.fretboard.dots.some( (j) => j.string === i.string && j.fret === i.fret),
 			})));
 			this.fretboard.render();
-			this.fretboard.wrapper.selectAll('.muted-string').remove();
+			this.fretboard.wrapper.selectAll('.muted-strings').remove();
 			this.fretboard.muteStrings({
 				strings: Array.from(mutes.values()),
 				width: 20,
 				stringWidth: 3,
 				stroke: "#333"
-			})
+			});
+
+			if (this.options.capo) {
+				const mutedStrings = this.fretboard.wrapper.select('.muted-strings');
+				this.fretboard.wrapper.
+					insert("svg").
+					attr('class', 'muted-strings').
+					attr('style', 'overflow: visible').
+					attr('x', `${this.fretboard.positions[0][this.options.capo - this.fretboard.getDotOffset()].x}%`).
+					attr('y', 0).
+					append(() => mutedStrings.node());
+			}
+
 		},
 
 		selectChord: function (chord) {
@@ -406,26 +469,64 @@ Vue.createApp({
 		},
 
 		lowerString: function () {
-			for (let dot of this.dots) {
-				dot.string = (dot.string - 1 + 1 + 6) % 6 + 1;
-				if (dot.string === 3) {
-					dot.fret--;
+			const byString = this.dots.reduce( (r, i) => r.set(i.string, i.fret) , new Map());
+			const dir = -1;
+			this.dots.length = 0;
+			for (let string = 1; string <= 6; string++) {
+				let src = ((string - 1  + dir) + 5) % 5 + 1;
+				if (src === 1 && !byString.has(src)) src = 6;
+				if (byString.has(src)) {
+					let fret = byString.get(src);
+					if (string === 3) {
+						fret--;
+					}
+					this.dots.push({
+						fret,
+						string,
+						note: fretboardNotes[string - 1][fret],
+					});
 				}
-				dot.note = fretboardNotes[dot.string - 1][dot.fret];
 			}
+
+//			for (let dot of this.dots) {
+//				dot.string = (dot.string - 1 + 1 + 6) % 6 + 1;
+//				if (dot.string === 3) {
+//					dot.fret--;
+//				}
+//				dot.note = fretboardNotes[dot.string - 1][dot.fret];
+//			}
 			this.updateDotsAndMutes();
 			this.updateFoundChords();
 			this.updateHashParams();
 		},
 
 		higherString: function () {
-			for (let dot of this.dots) {
-				dot.string = (dot.string - 1 - 1 + 6) % 6 + 1;
-				if (dot.string === 2) {
-					dot.fret++;
+			const byString = this.dots.reduce( (r, i) => r.set(i.string, i.fret) , new Map());
+			const dir = +1;
+			this.dots.length = 0;
+			for (let string = 1; string <= 6; string++) {
+				let src = ((string - 1  + dir) + 5) % 5 + 1;
+				if (src === 1 && !byString.has(src)) src = 6;
+				if (byString.has(src)) {
+					let fret = byString.get(src);
+					if (string === 2) {
+						fret++;
+					}
+					this.dots.push({
+						fret,
+						string,
+						note: fretboardNotes[string - 1][fret],
+					});
 				}
-				dot.note = fretboardNotes[dot.string - 1][dot.fret];
 			}
+//
+//			for (let dot of this.dots) {
+//				dot.string = (dot.string - 1 - 1 + 6) % 6 + 1;
+//				if (dot.string === 2) {
+//					dot.fret++;
+//				}
+//				dot.note = fretboardNotes[dot.string - 1][dot.fret];
+//			}
 			this.updateDotsAndMutes();
 			this.updateFoundChords();
 			this.updateHashParams();
@@ -443,8 +544,17 @@ Vue.createApp({
 			this.updateFoundChordsTimer = setTimeout(async () => {
 				const found = searchChordByNotes(this.dots.map( (i) => i.note )).slice(0, 30);
 				for await (let chord of found) {
-					// chord.chordNotes
 					chord.chordKeys = searchKeys(Chord.get(chord.names[0]));
+					/*
+					if (this.options.capo) {
+						const translatedTonic = Note.pitchClass(Note.fromMidi(chord.chordNotes[0].chroma + this.options.capo));
+						const translatedBase  = Note.pitchClass(Note.fromMidi(chord.base.chroma + this.options.capo));
+						chord.formName = translatedTonic + chord.aliases[0];
+						if (translatedTonic !== translatedBase) {
+							chord.formName += '/' + translatedBase;
+						}
+					}
+					*/
 				}
 				this.foundChords = found;
 			}, 100);
@@ -508,6 +618,12 @@ Vue.createApp({
 						dots,
 					});
 				}
+
+				this.updateHashParams();
+			}
+
+			if (params.get('capo')) {
+				this.options.capo = +params.get('capo');
 				this.updateHashParams();
 			}
 
@@ -542,6 +658,15 @@ Vue.createApp({
 			}
 
 			history.replaceState(null, "", "#" + params.toString());
+		},
+
+		capoCheck: function () {
+			if (this.capoEnabled) {
+				this.options.capo = 0;
+			} else {
+				const capo = prompt("Enter capo fret number", this.options.capo);
+				this.options.capo = +capo;
+			}
 		},
 
 		serializeDots: function (dots) {

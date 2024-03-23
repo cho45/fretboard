@@ -151,6 +151,9 @@
 						<figure id="fretboard"></figure>
 						<v-row style="padding: 0 20px">
 							<v-col cols="12" md="2">
+								<v-checkbox density="compact" v-model="capoEnabled" :label="`Capo ${options.capo ? options.capo : ''}`" @click="capoCheck"></v-checkbox>
+							</v-col>
+							<v-col cols="12" md="2">
 								<v-checkbox density="compact" v-model="options.overlayScale" label="Overlay Scale"></v-checkbox>
 							</v-col>
 							<template v-if="options.overlayScale">
