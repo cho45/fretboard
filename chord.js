@@ -146,11 +146,20 @@ async function midiDeviceSend(notes) {
 		return;
 	}
 
+
 	for (let output of outputs.values()) {
 		console.log(output);
-		for (let note of notes) {
-			output.send(noteOn(note, 100));
-			output.send(noteOff(note), window.performance.now() + 500);
+		await output.open();
+		try {
+			output.send([0xC0, 27], 0);
+			for (let note of notes) {
+				output.send(noteOn(note, 100));
+				output.send(noteOff(note), window.performance.now() + 800);
+			}
+		} catch (e) {
+			console.log(e);
+		} finally {
+			output.close();
 		}
 	}
 }
@@ -545,16 +554,14 @@ Vue.createApp({
 				const found = searchChordByNotes(this.dots.map( (i) => i.note )).slice(0, 30);
 				for await (let chord of found) {
 					chord.chordKeys = searchKeys(Chord.get(chord.names[0]));
-					/*
 					if (this.options.capo) {
-						const translatedTonic = Note.pitchClass(Note.fromMidi(chord.chordNotes[0].chroma + this.options.capo));
-						const translatedBase  = Note.pitchClass(Note.fromMidi(chord.base.chroma + this.options.capo));
+						const translatedTonic = Note.enharmonic(Note.pitchClass(Note.fromMidi(chord.chordNotes[0].chroma - this.options.capo + 12)));
+						const translatedBase  = Note.enharmonic(Note.pitchClass(Note.fromMidi(chord.base.chroma - this.options.capo + 12)));
 						chord.formName = translatedTonic + chord.aliases[0];
 						if (translatedTonic !== translatedBase) {
 							chord.formName += '/' + translatedBase;
 						}
 					}
-					*/
 				}
 				this.foundChords = found;
 			}, 100);

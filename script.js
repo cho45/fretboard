@@ -6,6 +6,38 @@ import {
 
 import Note from 'https://cdn.jsdelivr.net/npm/@tonaljs/note@4.10.0/+esm';
 
+function drawMarkerForFretboard(fretboard) {
+	const { wrapper, positions } = fretboard;
+	const dotOffset = fretboard.getDotOffset();
+	const fretMarkerSize = 20;
+	const fretMarkerColor = "#dddddd";
+	const fretMarkerGroup = wrapper.append('g').attr('class', 'fret-marker-group');
+	fretMarkerGroup
+		.selectAll('circle')
+		.data([
+			{ string: 3, fret: 3 }, 
+			{ string: 3, fret: 5 }, 
+			{ string: 3, fret: 7 }, 
+			{ string: 3, fret: 9 }, 
+			{ string: 2, fret: 12 }, 
+			{ string: 4, fret: 12 }, 
+			{ string: 3, fret: 15 }, 
+			{ string: 3, fret: 17 }, 
+			{ string: 3, fret: 19 }, 
+			{ string: 3, fret: 21 }, 
+			{ string: 2, fret: 24 }, 
+			{ string: 4, fret: 24 }, 
+		])
+		.enter()
+		.filter(({ fret }) => fret >= 0 && fret <= fretboard.options.fretCount + dotOffset)
+		.append('circle')
+		.attr('class', 'position-mark')
+		.attr('cx', ({ string, fret }) => `${positions[string - 1][fret - dotOffset].x}%`)
+		.attr('cy', ({ string, fret }) => (positions[string - 1][fret - dotOffset].y + positions[string][fret - dotOffset].y) / 2)
+		.attr('r', fretMarkerSize * 0.5)
+		.attr('fill', fretMarkerColor);
+}
+
 const MAJOR_CAGED_BOXES0 =  [
 	{
 		box: [
@@ -122,6 +154,122 @@ const MAJOR_CAGED_BOXES =  [
 	},    
 ];
 
+const MAJOR_CAGED_BOXES_1357 =  [
+	{
+		box: [
+			'3--5',
+			'71--',
+			'5---',
+			'--3-',
+			'--71',
+			'3--5'
+		],
+		baseChroma: Note.chroma('C'),
+	},    
+	{
+		box: [
+			'-5---7',
+			'---3-',
+			'--71-',
+			'3--5-',
+			'71---',
+			'-5---'
+		],
+		baseChroma: Note.chroma('A#'),
+	},
+	{
+		box: [
+			'---71',
+			'-3--5',
+			'71---',
+			'-5---',
+			'---3-',
+			'---71'
+		],
+		baseChroma: Note.chroma('G#'),
+	},        
+	{
+		box: [
+			'71--',
+			'-5--',
+			'--3-',
+			'--71',
+			'3--5',
+			'71--'
+		],
+		baseChroma: Note.chroma('E#'),
+	},    
+	{
+		box: [
+			'---3-',
+			'---71',
+			'3--5',
+			'71---',
+			'-5---',
+			'---3-'
+		],
+		baseChroma: Note.chroma('D#'),
+	},    
+];
+
+const MAJOR_CAGED_BOXES_X =  [
+	{
+		box: [
+			'34-5',
+			'71-2',
+			'5-6-',
+			'2-34',
+			'6-71',
+			'34-5'
+		],
+		baseChroma: Note.chroma('C'),
+	},    
+	{
+		box: [
+			'4-5-6',
+			'--2-3',
+			'-6-71',
+			'-34-5',
+			'-71-2',
+			'4-5-6'
+		],
+		baseChroma: Note.chroma('B'),
+	},
+	{
+		box: [
+			'6-71',
+			'34-5',
+			'1-2-',
+			'5-6-7',
+			'2-34',
+			'6-71'
+		],
+		baseChroma: Note.chroma('G'),
+	},        
+	{
+		box: [
+			'1-2-3',
+			'--6-7',
+			'-34-5',
+			'-71-2',
+			'4-5-6',
+			'1-2-7'
+		],
+		baseChroma: Note.chroma('E'),
+	},    
+	{
+		box: [
+			'2-34',
+			'6-71',
+			'4-5-',
+			'1-2-3',
+			'5-6-7',
+			'2-34'
+		],
+		baseChroma: Note.chroma('D'),
+	},    
+];
+
 
 Vue.createApp({
 	data() {
@@ -187,7 +335,7 @@ Vue.createApp({
 			middleFretColor: "#333333",
 			middleFretWidth: 1.5,
 			height: 200,
-			width: 1280,
+			width: 800,
 			dotSize: 25,
 			dotStrokeWidth: 2,
 			dotTextSize: 13,
@@ -232,21 +380,37 @@ Vue.createApp({
 			dotFill: ({ note }) =>
 				Note.get(note).chroma !== Note.get(this.root).chroma
 				? `hsl(${Note.get(note).chroma / 12 * 360}, 50%, 90%, 90%)`
-				: `hsl(${Note.get(note).chroma / 12 * 360}, 50%, 40%, 100%)`
+				: `hsl(${Note.get(note).chroma / 12 * 360}, 50%, 40%, 100%)`,
+			fretCount: 22,
+			height: 200,
+			width: 1280,
 		});
 
 		this.fretboardPentatonic = new Fretboard({
+			...commonOpts,
 			el: '#fretboard-pentatonic',
-			...commonOpts
+			fretCount: 17,
 		});
 
 		this.fretboardMajor = new Fretboard({
+			...commonOpts,
 			el: '#fretboard-major',
-			...commonOpts
+			fretCount: 17,
 		});
 		this.fretboardMajor2 = new Fretboard({
+			...commonOpts,
 			el: '#fretboard-major2',
-			...commonOpts
+			fretCount: 17,
+		});
+		this.fretboardMajor3 = new Fretboard({
+			...commonOpts,
+			el: '#fretboard-major3',
+			fretCount: 17,
+		});
+		this.fretboardMajor1357 = new Fretboard({
+			...commonOpts,
+			el: '#fretboard-1357',
+			fretCount: 17,
 		});
 
 		window.FretboardSystem = FretboardSystem;
@@ -302,7 +466,7 @@ Vue.createApp({
 
 	methods: {
 		updateFretboard: function () {
-			const { fretboardAll, fretboardPentatonic, fretboardMajor, fretboardMajor2 } = this;
+			const { fretboardAll, fretboardPentatonic, fretboardMajor, fretboardMajor2, fretboardMajor3, fretboardMajor1357 } = this;
 			fretboardAll.renderScale({
 				type: 'chromatic',
 			});
@@ -348,6 +512,8 @@ Vue.createApp({
 
 			this.renderScale(fretboardMajor, MAJOR_CAGED_BOXES0);
 			this.renderScale(fretboardMajor2, MAJOR_CAGED_BOXES);
+			this.renderScale(fretboardMajor3, MAJOR_CAGED_BOXES_X);
+			this.renderScale(fretboardMajor1357, MAJOR_CAGED_BOXES_1357);
 		},
 
 		renderScale: function (fretboard, boxes) {

@@ -112,9 +112,8 @@
 				</v-navigation-drawer -->
 
 				<v-main style="">
-					<v-container style="width: 1600px">
-
-						<v-container>
+					<v-container>
+						<v-container style="width: 1600px">
 							<v-row>
 								<v-col cols="12" md="2">
 									<v-select
@@ -139,16 +138,36 @@
 								</v-col>
 							</v-row>
 						</v-container>
-						<figure id="fretboard-all"></figure>
+						<v-container style="width: 1600px">
+							<figure id="fretboard-all"></figure>
+						</v-container>
 						<h1>
 							{{boxForm}} Form
 						</h1>
-						<h2>{{root}} Major Pentatonic Scale</h2>
-						<figure id="fretboard-pentatonic"></figure>
-						<h2>{{root}} Major Scale /  Pentatonic+4+7</h2>
-						<figure id="fretboard-major"></figure>
-						<h2>{{root}} Major Scale / William Leavitt/Berklee system</h2>
-						<figure id="fretboard-major2"></figure>
+						<v-container>
+							<v-row wrap>
+								<v-col cols="6">
+									<h2>{{root}} Major Scale / William Leavitt/Berklee system</h2>
+									<figure id="fretboard-major2"></figure>
+								</v-col>
+								<v-col cols="6">
+									<h2>{{root}} Major Scale / William Leavitt/Berklee system (2)</h2>
+									<figure id="fretboard-major3"></figure>
+								</v-col>
+								<v-col cols="6">
+									<h2>{{root}} Major Scale /  Pentatonic+4+7</h2>
+									<figure id="fretboard-major"></figure>
+								</v-col>
+								<v-col cols="6">
+									<h2>{{root}} Major Pentatonic Scale</h2>
+									<figure id="fretboard-pentatonic"></figure>
+								</v-col>
+								<v-col cols="6">
+									<h2>{{root}} Major 1357</h2>
+									<figure id="fretboard-1357"></figure>
+								</v-col>
+							</v-row>
+						</v-container>
 
 
 						<!-- v-select

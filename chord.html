@@ -202,6 +202,10 @@
 													>
 													{{formatNote(name)}}
 												</span>
+												<span class="chord-name"
+													:style="{ color: '#666666' }"
+													v-if="options.capo">({{formatNote(chord.formName)}})
+												</span>
 												<v-btn title="Add to set" class="add-button" icon="mdi-plus" size="x-small" @click="addToSet(chord)" v-if="!isInChordSet(chord)"></v-btn>
 												<v-btn title="Remove from set" class="add-button" icon="mdi-minus" size="x-small" @click="removeFromSet(chord)" v-else></v-btn>
 											</td>
