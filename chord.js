@@ -52,7 +52,7 @@ function searchChordByNotes(notes) {
 			let names = chordType.aliases.map((alias) => noteName(index) + alias);
 			const chord = Chord.get(names[0]);
 			const basePc = Note.enharmonic(base.pc);
-			// on code
+			// on chord
 			if (basePc !== tonic) {
 				const baseNote = chordNotes.find((note) => Note.get(note.name).chroma === base.chroma);
 				names = names.map((name) => name + "/" + (baseNote ? baseNote.name : basePc));
@@ -136,6 +136,11 @@ async function midiDeviceSend(notes) {
 
 	function noteOff(note) {
 		return [0x80, note, 0];
+	}
+
+	if (typeof navigator.requestMIDIAccess === "undefined") {
+		console.log('MIDI not supported');
+		return;
 	}
 
 	const midi = await navigator.requestMIDIAccess();
