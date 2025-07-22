@@ -48,6 +48,11 @@
 				font-size: 90%;
 			}
 
+			.note-list {
+				padding: 20px 40px;
+				font-size: 0.9em;
+			}
+
 			.chord-set {
 				padding: 5px;
 			}
@@ -239,9 +244,11 @@
 								</tbody>
 							</table>
 						</div>
-						<ul>
+						<ul class="note-list">
 							<li>
-							weight は notes の一致度合いを示す。100% が最大値。ただしベース音が違う場合は 0.99 倍している。
+							weight はコードの一致度を示す（100%が最大値）。
+							完全一致の場合は100%、部分一致の場合は共通音・不足音・余分な音に基づいて計算。
+							転回形（オンコード）の場合：第1転回形90%、第2転回形85%、その他70%に減少。
 							</li>
 							<li>
 								diatonic chord of key はメジャーキーとハーモニックマイナーのみを対象としている。
