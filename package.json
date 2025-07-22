@@ -1,0 +1,27 @@
+{
+  "name": "fretboard",
+  "version": "1.0.0",
+  "description": "Guitar fretboard visualization and chord/scale search tool",
+  "type": "module",
+  "scripts": {
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest --coverage",
+    "test:run": "vitest run"
+  },
+  "dependencies": {
+    "tonal": "^5.1.0"
+  },
+  "devDependencies": {
+    "vitest": "^3.2.4"
+  },
+  "keywords": [
+    "guitar",
+    "fretboard",
+    "chord",
+    "scale",
+    "music"
+  ],
+  "author": "",
+  "license": "ISC"
+}
