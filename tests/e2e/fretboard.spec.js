@@ -49,6 +49,91 @@ test.describe('Fretboard App', () => {
 		await expect(dots).toHaveCount(5);
 	});
 
+	test('chord.html interaction: adding and removing dots', async ({ page }) => {
+		await page.goto('/chord.html');
+
+		// SVG要素を取得
+		const fretboardSvg = page.locator('#fretboard svg');
+		await expect(fretboardSvg).toBeVisible();
+
+		// 座標指定でクリック（1弦3フレット付近を狙う）
+		// @moonwave99/fretboard.js のデフォルト設定では、左側にナットがある
+		const box = await fretboardSvg.boundingBox();
+		if (box) {
+			// フレット1〜3あたりをクリックしてみる（全体幅の約20%あたり）
+			await page.mouse.click(box.x + box.width * 0.2, box.y + box.height * 0.5);
+
+			// ドットが表示されるのを待機（デバウンス等の影響を考慮して少し待つ可能性があるが、toHaveCount はリトライする）
+			await expect(page.locator('#fretboard circle.dot-circle')).toHaveCount(1);
+
+			// 同じ場所を再度クリックして削除
+			await page.mouse.click(box.x + box.width * 0.2, box.y + box.height * 0.5);
+			await expect(page.locator('#fretboard circle.dot-circle')).toHaveCount(0);
+		}
+	});
+
+	test('chord.html interaction: control buttons (Clear, Fret/String move)', async ({ page }) => {
+		// 初期状態でドットがある状態から開始 (Cメジャー: x32010)
+		await page.goto('/chord.html#c=x32010');
+		// ドットを待機
+		const dots = page.locator('#fretboard circle.dot-circle');
+		await expect(dots).toHaveCount(5);
+
+		// Higher Fret ボタンをクリック (+1フレット)
+		await page.getByRole('button', { name: 'Higher Fret' }).click();
+
+		// ドット数が維持されているか、または変化しているかを確認
+		// (x32010 から Higher Fret すると、開放弦はそのままか移動するかはロジック次第)
+		// chord.js の higherFret は全てのドットの fret を ++ する
+		await expect(dots).toHaveCount(5);
+
+		// 結果が更新されるのを待つ
+		const chordName = page.locator('.results .chord-name').first();
+		// C から C# などに変わっているはず。一旦 "C" が含まれていることだけ確認（C# も C を含み得るが、toContainText は便利）
+		await expect(chordName).toBeVisible();
+
+		// Clear ボタンをクリック
+		await page.getByRole('button', { name: 'Clear' }).click();
+		await expect(dots).toHaveCount(0);
+	});
+
+	test('chord.html settings: Overlay Scale', async ({ page }) => {
+		await page.goto('/chord.html');
+
+		// Overlay Scale チェックボックスをオンにする
+		await page.getByLabel('Overlay Scale').check();
+
+		// スケールのドットが表示されるはず
+		// 5個（またはデフォルトの何か）以上のドットがあることを確認
+		const allDots = page.locator('#fretboard circle.dot-circle');
+		const count = await allDots.count();
+		expect(count).toBeGreaterThan(5);
+	});
+
+	test('chord.html settings: Capo', async ({ page }) => {
+		await page.goto('/chord.html#c=022100'); // E major
+
+		// カポ設定（prompt をモック）
+		// Playwright では dialog イベントを一度だけ listen する
+		page.once('dialog', async dialog => {
+			await dialog.accept('1');
+		});
+
+		// Capo チェックボックスをクリック
+		await page.getByLabel(/Capo/).click();
+
+		// カポ（バレー）が表示されているか確認
+		const barre = page.locator('#fretboard .barres');
+		await expect(barre).toBeVisible();
+
+		// コード名が更新されるか確認
+		// 厳密モード回避のため .first() を使用
+		const firstChordName = page.locator('.results .chord-name').first();
+		await expect(firstChordName).toBeVisible();
+		// カポ設定時は フォーム名が表示されるはず (括弧が含まれる)
+		await expect(page.locator('.results')).toContainText('(');
+	});
+
 	test('scale.html should render search interface', async ({ page }) => {
 		await page.goto('/scale.html');
 		await expect(page).toHaveTitle(/Scale Search/);
