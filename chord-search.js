@@ -29,7 +29,13 @@ export function searchChordByNotes(notes) {
 
 	const ret = [];
 	Pcset.modes(notes, false).forEach((mode, index) => {
-		const tonic = noteName(index);
+		let tonic = noteName(index);
+		// 入力されたノートの中に同じクロマのものがあれば、その名前を優先する
+		const existingNote = notes.find(n => Note.get(n).chroma === index);
+		if (existingNote) {
+			tonic = Note.get(existingNote).pc;
+		}
+		
 		const searchSetNum = Pcset.num(mode);
 		const types = ChordType.all().map( (chordType) => {
 			const chordNotes = chordType.intervals.map((interval) => ({
@@ -39,7 +45,7 @@ export function searchChordByNotes(notes) {
 				existing: notes.some((note) => Note.chroma(note) === Note.chroma(Note.transpose(tonic, interval))),
 			}));
 
-			let names = chordType.aliases.map((alias) => noteName(index) + alias);
+			let names = chordType.aliases.map((alias) => tonic + alias);
 			const chord = Chord.get(names[0]);
 			const basePc = Note.enharmonic(base.pc);
 			
@@ -133,6 +139,9 @@ function getChordTypePriority(chordType) {
 	// 7thコード（maj7以外）
 	if (aliasesStr.match(/\b7\b/) && !aliasesStr.includes('maj7') && !aliasesStr.includes('M7')) return 0.97;
 	
+	// その他、変化音（#5, b5, #9, b9等）を含むものはさらに下げる
+	if (aliasesStr.includes('#') || aliasesStr.includes('b')) return 0.8;
+	
 	// メジャー、マイナー、maj7は最高優先度
 	return 1.0;
 }
@@ -161,11 +170,8 @@ function calculateWeightAdvanced(params) {
 		matchScore *= Math.pow(0.95, extra);   // 余分音ペナルティ
 	}
 	
-	// 2. コードタイプ優先度 - 完全一致の場合はスキップ
-	let typeScore = 1.0;
-	if (!isPerfectMatch) {
-		typeScore = getChordTypePriority(chordType);
-	}
+	// 2. コードタイプ優先度
+	const typeScore = getChordTypePriority(chordType);
 	
 	// 3. 転回形ペナルティ
 	let inversionPenalty = 1.0;

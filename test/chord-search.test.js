@@ -73,6 +73,39 @@ describe('chord-search functions', () => {
         searchChordByNotes(['C', 'E', 'G']);
       }).toThrow(/octave must be specified/);
     });
+
+    it('should handle duplicate notes across octaves', () => {
+      const singleResults = searchChordByNotes(['C4', 'E4', 'G4']);
+      const duplicateResults = searchChordByNotes(['C4', 'E4', 'G4', 'C5']);
+      
+      expect(duplicateResults[0].tonic).toBe('C');
+      expect(duplicateResults[0].names[0]).toBe(singleResults[0].names[0]);
+      // Note: weight might be slightly different due to extra notes penalty
+      // but the top chord should still be C major
+      expect(duplicateResults[0].names[0]).toMatch(/^C/);
+    });
+
+    it('should correctly identify the base note when duplicated in octaves', () => {
+      // E3 is the lowest, so it's the base
+      const results = searchChordByNotes(['E3', 'G3', 'C4', 'E4']);
+      expect(results[0].base.name).toBe('E3');
+      expect(results[0].names[0]).toContain('/E');
+    });
+
+    it('should handle enharmonic equivalents', () => {
+      const sharpResults = searchChordByNotes(['F#4', 'A#4', 'C#5']);
+      const flatResults = searchChordByNotes(['Gb4', 'Bb4', 'Db5']);
+      
+      expect(sharpResults[0].tonic).toBe('F#');
+      expect(flatResults[0].tonic).toBe('Gb');
+      
+      // They should both be major chords
+      expect(sharpResults[0].names[0]).toMatch(/^F#/);
+      expect(flatResults[0].names[0]).toMatch(/^Gb/);
+      
+      // Chroma check
+      expect(sharpResults[0].chordNotes.map(n => n.chroma)).toEqual(flatResults[0].chordNotes.map(n => n.chroma));
+    });
   });
 
   describe('searchKeys', () => {
@@ -84,6 +117,25 @@ describe('chord-search functions', () => {
       
       const cMajorInCKey = keys.find(k => k.key === 'C' && k.grade === 'I');
       expect(cMajorInCKey).toBeTruthy();
+    });
+
+    it('should find keys for Am chord including minor keys', () => {
+      const aMinorChord = Chord.get('Am');
+      const keys = searchKeys(aMinorChord);
+      
+      // Am is i in Am, iv in Em, v in Bm (harmonic)
+      // Also vi in C, ii in G, iii in F
+      expect(keys.find(k => k.key === 'Am' && k.grade === 'i')).toBeTruthy();
+      expect(keys.find(k => k.key === 'C' && k.grade === 'vi')).toBeTruthy();
+      expect(keys.find(k => k.key === 'G' && k.grade === 'ii')).toBeTruthy();
+    });
+
+    it('should find G7 as V in C major', () => {
+      const g7Chord = Chord.get('G7');
+      const keys = searchKeys(g7Chord);
+      
+      const g7InC = keys.find(k => k.key === 'C' && k.grade === 'V');
+      expect(g7InC).toBeTruthy();
     });
 
     it('should return empty array for unknown quality chord', () => {
@@ -250,6 +302,54 @@ describe('chord-search functions', () => {
       expect(weight).toBeLessThan(1.0);
       expect(weight).toBeCloseTo(0.95 * 0.75, 2); // matchScore * typeScore
     });
+
+    it('should handle completely unrelated notes', () => {
+      const selectedNotes = [
+        { pc: 'Db', chroma: 1 },
+        { pc: 'Gb', chroma: 6 }
+      ];
+      
+      const chordType = ChordType.get('M'); // C major: C, E, G (0, 4, 7)
+      const chordNotes = [
+        { chroma: 0, name: 'C' },
+        { chroma: 4, name: 'E' },
+        { chroma: 7, name: 'G' }
+      ];
+      
+      const weight = calculateChordWeight({
+        selectedNotes,
+        chordType,
+        chordNotes,
+        base: { pc: 'Db', chroma: 1 },
+        tonic: 'C'
+      });
+      
+      expect(weight).toBe(0);
+    });
+
+    it('should handle single note match', () => {
+      const selectedNotes = [
+        { pc: 'C', chroma: 0 }
+      ];
+      
+      const chordType = ChordType.get('M');
+      const chordNotes = [
+        { chroma: 0, name: 'C' },
+        { chroma: 4, name: 'E' },
+        { chroma: 7, name: 'G' }
+      ];
+      
+      const weight = calculateChordWeight({
+        selectedNotes,
+        chordType,
+        chordNotes,
+        base: { pc: 'C', chroma: 0 },
+        tonic: 'C'
+      });
+      
+      expect(weight).toBeGreaterThan(0);
+      expect(weight).toBeLessThan(0.5);
+    });
   });
 
   describe('searchChordByNotes with new weight algorithm', () => {
@@ -259,7 +359,7 @@ describe('chord-search functions', () => {
       
       expect(cMajor).toBeTruthy();
       expect(cMajor.weight).toBe(1.0);
-      expect(results[0].weight).toBe(1.0); // 最上位のコードは重み1.0であるべき
+      expect(results[0].weight).toBe(1.0);
     });
 
     it('should handle partial matches correctly', () => {
@@ -296,12 +396,12 @@ describe('chord-search functions', () => {
       expect(eMajorInversion.weight).toBeLessThan(eMajorRoot.weight);
     });
 
-    it('should give perfect match weight 1.0 for Dsus4', () => {
+    it('should give perfect match weight 0.95 for Dsus4', () => {
       const results = searchChordByNotes(['D4', 'G4', 'A4']);
       const dsus4 = results.find(r => r.names[0].includes('sus4'));
       
       expect(dsus4).toBeTruthy();
-      expect(dsus4.weight).toBe(1.0); // Dsus4の構成音D,G,Aと完全一致
+      expect(dsus4.weight).toBe(0.95); // Dsus4の構成音D,G,Aと完全一致だがsusタイプ優先度
     });
 
     it('should give perfect match weight 1.0 for E5 power chord', () => {
