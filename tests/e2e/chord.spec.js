@@ -213,4 +213,65 @@ test.describe('Chord Search Page', () => {
 		const url = page.url();
 		expect(url).toContain(highFretHash);
 	});
+
+	test('chord.html: Mouse hover interaction', async ({ page }) => {
+		await page.goto('/chord.html');
+		const fretboardSvg = page.locator('#fretboard svg');
+
+		// フレットボード上でマウスを移動
+		const box = await fretboardSvg.boundingBox();
+		if (box) {
+			// フレットボードの適当な位置をホバー
+			await page.mouse.move(box.x + box.width * 0.3, box.y + box.height * 0.5);
+
+			// 仮のドット（透過度がある、または特定のクラスを持つ可能性があるが、ここではドット自体が存在するか確認）
+			const hoverDots = page.locator('#fretboard circle.dot-circle');
+			// ホバー中は1つドットが表示されるはず
+			await expect(hoverDots).toHaveCount(1);
+
+			// マウスを離す
+			await page.mouse.move(0, 0);
+			// ドットが消えることを確認
+			await expect(hoverDots).toHaveCount(0);
+		}
+	});
+
+	test('chord.html: Settings interaction (Scale/Root)', async ({ page }) => {
+		await page.goto('/chord.html');
+
+		// 1. Overlay Scale を有効化
+		await page.getByLabel('Overlay Scale').check();
+
+		// Root 選択ツールが表示されるか確認
+		const rootSelect = page.locator('.v-input', { has: page.locator('label', { hasText: /^Root$/ }) });
+		await expect(rootSelect).toBeVisible();
+
+		// Root を変更 (例: C -> D)
+		await rootSelect.click();
+		// exact: true で D のみを対象にする
+		await page.getByRole('option', { name: 'D', exact: true }).click();
+
+		// Scale を変更 (例: major -> minor)
+		const scaleSelect = page.locator('.v-input', { has: page.locator('label', { hasText: /^Scale$/ }) });
+		await scaleSelect.click();
+		// exact: true で minor のみを対象にし、harmonic minor 等との衝突を防ぐ
+		await page.getByRole('option', { name: 'minor', exact: true }).click();
+
+		// 設定項目が反映されているか確認
+		await expect(rootSelect).toContainText('D');
+		await expect(scaleSelect).toContainText('minor');
+	});
+
+	test('chord.html: MIDI send button', async ({ page }) => {
+		await page.goto('/chord.html#c=x32010');
+
+		// MIDI送信ボタンをクリック
+		// 実際には MIDI デバイスがないためエラー等が出る可能性があるが、
+		// 少なくともボタンがクリック可能であり、メソッドが呼ばれることを（副作用等で）確認
+		const midiButton = page.getByRole('button', { name: 'Send MIDI' });
+		await expect(midiButton).toBeVisible();
+
+		// クリックしてクラッシュしないことを確認
+		await midiButton.click();
+	});
 });
