@@ -4,13 +4,13 @@ This repository is a tool for visualizing and searching guitar fretboards, chord
 
 ## File Structure
 
-- [`chord.html`]( https://cho45.stfuawsc.com/fletboard/chord.html )
+- [`chord.html`](https://cho45.github.io/fretboard/chord.html)
   Lookup chord from fretboard.
 
-- [`index.html`](https://cho45.stfuawsc.com/fletboard/ )
+- [`index.html`](https://cho45.github.io/fretboard/)
   Displays CAGED system, pentatonic scales, etc.
 
-- [`scale.html`](https://cho45.stfuawsc.com/fletboard/scale.html )
+- [`scale.html`](https://cho45.github.io/fretboard/scale.html)
   Lookup scale from notes or chord
 
 ## Development
