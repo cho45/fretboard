@@ -123,4 +123,51 @@ test.describe('Chord Search Page', () => {
 		// 括弧が含まれるフォーム名が表示されるか確認
 		await expect(page.locator('.results')).toContainText('(');
 	});
+
+	test('chord.html: Chord Set interaction (Add, Select, Remove, Hash)', async ({ page }) => {
+		// Cメジャーで開始
+		await page.goto('/chord.html#c=x32010');
+
+		// 1. セットに追加 (Add)
+		// 最初の検索結果の「追加」ボタンをクリック
+		const addButton = page.locator('.results .add-button').first();
+		// Vuetifyのボタンやホバー時の表示を考慮して force: true か hover を検討
+		await addButton.click({ force: true });
+
+		// セット内にコードが表示されているか確認
+		const chordSetItem = page.locator('.chord-set .chord-name');
+		await expect(chordSetItem).toContainText('C');
+
+		// 2. セットからの復元 (Select)
+		// 一旦フレットボードをクリア
+		await page.getByRole('button', { name: 'Clear' }).click();
+		await expect(page.locator('#fretboard circle.dot-circle')).toHaveCount(0);
+
+		// セット内のコード名をクリックして復元
+		await chordSetItem.click();
+		// ドットが5つに戻ることを確認
+		await expect(page.locator('#fretboard circle.dot-circle')).toHaveCount(5);
+
+		// 3. URLハッシュ同期の確認 (Hash)
+		const url = page.url();
+		expect(url).toContain('s=');
+
+		// 4. セットからの削除 (Remove)
+		// このアプリでは、追加ボタンと同じ場所が「削除」ボタン (mdi-minus) になる
+		const removeButton = page.locator('.results .add-button').first(); // isInChordSet(chord) が true なのでマナイスボタンになっている
+		await removeButton.click({ force: true });
+
+		// セットが空になったことを確認
+		await expect(chordSetItem).toHaveCount(0);
+	});
+
+	test('chord.html: Chord Set load from hash', async ({ page }) => {
+		// 特定のセットを持つURLで直接アクセス (Cコードをセットに含む)
+		// s=x32010-C
+		await page.goto('/chord.html#s=x32010-C');
+
+		// 初期状態でセットにコードが含まれているか
+		const chordSetItem = page.locator('.chord-set .chord-name');
+		await expect(chordSetItem).toContainText('C');
+	});
 });
