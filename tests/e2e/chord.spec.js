@@ -170,4 +170,47 @@ test.describe('Chord Search Page', () => {
 		const chordSetItem = page.locator('.chord-set .chord-name');
 		await expect(chordSetItem).toContainText('C');
 	});
+
+	test('chord.html: Boundary interaction (fret limits)', async ({ page }) => {
+		// 開放弦を含むコードで開始 (E major: 022100)
+		await page.goto('/chord.html#c=022100');
+		const dots = page.locator('#fretboard circle.dot-circle');
+
+		// 1. Lower Fret 限界テスト (0フレット以下には行かない)
+		await page.getByRole('button', { name: 'Lower Fret' }).click();
+		// 0フレットがあるため全体数が 6 のまま維持されるはず
+		await expect(dots).toHaveCount(6);
+
+		// 2. Higher Fret 限界テスト (17フレットが上限)
+		// ハイフレット (11フレット) で開始
+		const highFretHash = '111111111111';
+		await page.goto(`/chord.html#c=${highFretHash}`);
+		await expect(dots).toHaveCount(6);
+
+		// Higher Fret を連打して限界（17フレット）まで持っていく
+		const higherButton = page.getByRole('button', { name: 'Higher Fret' });
+		for (let i = 0; i < 10; i++) {
+			await higherButton.click();
+		}
+
+		// URL に 17 が含まれていることを確認
+		expect(page.url()).toContain('17');
+
+		// さらにもう一度押しても 17 のままであること
+		await higherButton.click();
+		expect(page.url()).toContain('17');
+	});
+
+	test('chord.html: High fret hash sync', async ({ page }) => {
+		// 10フレット以上のハイフレットコード (例: 全弦12フレット)
+		const highFretHash = '121212121212';
+		await page.goto(`/chord.html#c=${highFretHash}`);
+
+		const dots = page.locator('#fretboard circle.dot-circle');
+		await expect(dots).toHaveCount(6);
+
+		// URLを再取得してハッシュが維持されているか確認
+		const url = page.url();
+		expect(url).toContain(highFretHash);
+	});
 });
