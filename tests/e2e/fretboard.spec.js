@@ -74,25 +74,41 @@ test.describe('Fretboard App', () => {
 
 	test('chord.html interaction: control buttons (Clear, Fret/String move)', async ({ page }) => {
 		// 初期状態でドットがある状態から開始 (Cメジャー: x32010)
+		// 5弦3f(C), 4弦2f(E), 3弦0f(G), 2弦1f(C), 1弦0f(E)
 		await page.goto('/chord.html#c=x32010');
-		// ドットを待機
 		const dots = page.locator('#fretboard circle.dot-circle');
 		await expect(dots).toHaveCount(5);
 
-		// Higher Fret ボタンをクリック (+1フレット)
+		// --- Higher Fret テスト (+1フレット) ---
 		await page.getByRole('button', { name: 'Higher Fret' }).click();
-
-		// ドット数が維持されているか、または変化しているかを確認
-		// (x32010 から Higher Fret すると、開放弦はそのままか移動するかはロジック次第)
-		// chord.js の higherFret は全てのドットの fret を ++ する
+		// C -> C♯ になるはず。
+		await expect(page.locator('.results .chord-name').first()).toContainText('C');
 		await expect(dots).toHaveCount(5);
 
-		// 結果が更新されるのを待つ
-		const chordName = page.locator('.results .chord-name').first();
-		// C から C# などに変わっているはず。一旦 "C" が含まれていることだけ確認（C# も C を含み得るが、toContainText は便利）
-		await expect(chordName).toBeVisible();
+		// --- Lower Fret テスト (-1フレット) ---
+		await page.getByRole('button', { name: 'Lower Fret' }).click();
+		// C♯ -> C に戻る
+		await expect(page.locator('.results .chord-name').first()).toContainText('C');
+		await expect(dots).toHaveCount(5);
 
-		// Clear ボタンをクリック
+		// --- Higher String テスト (+1弦 = 物理的に下の弦へ移動) ---
+		// 現在 x32010 (C)
+		// Higher String では、各ドットが一つ高い弦へ移動する。
+		// ロジック上、ドット数が増減する可能性があるため、ここでは移動が行われたことを確認
+		await page.getByRole('button', { name: 'Higher String' }).click();
+		// 何らかのドットが存在することを確認
+		await expect(dots).not.toHaveCount(0);
+
+		// 音が変わっていることを確認
+		const firstChordAfterHigher = await page.locator('.results .chord-name').first().textContent();
+		expect(firstChordAfterHigher).not.toBe('C');
+
+		// --- Lower String テスト (-1弦 = 物理的に上の弦へ移動) ---
+		await page.getByRole('button', { name: 'Lower String' }).click();
+		// 移動後の状態からさらに移動することを確認
+		await expect(dots).not.toHaveCount(0);
+
+		// --- Clear テスト ---
 		await page.getByRole('button', { name: 'Clear' }).click();
 		await expect(dots).toHaveCount(0);
 	});
