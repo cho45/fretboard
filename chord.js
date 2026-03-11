@@ -1,12 +1,17 @@
+import { createApp } from 'vue';
+import { createVuetify } from 'vuetify';
+import * as components from 'vuetify/components';
+import * as directives from 'vuetify/directives';
+import 'vuetify/styles';
+import '@mdi/font/css/materialdesignicons.css';
 import {
 	Fretboard,
 	Systems,
 	FretboardSystem
-} from 'https://cdn.jsdelivr.net/npm/@moonwave99/fretboard.js@0.2.13/+esm';
+} from '@moonwave99/fretboard.js';
 
 import { searchChordByNotes, searchKeys, noteName } from './chord-search.js';
-// import Note from 'https://cdn.jsdelivr.net/npm/@tonaljs/note@4.10.0/+esm';
-import { Key, Pcset, Chord, ChordType, Interval, Note, Scale } from 'https://cdn.jsdelivr.net/npm/tonal@5.1.0/+esm';
+import { Key, Pcset, Chord, ChordType, Interval, Note, Scale } from 'tonal';
 
 const fretboardNotes = ['E2', 'A2', 'D3', 'G3', 'B3', 'E4'].reverse().map(n => {
 	const open = Note.get(n).midi;
@@ -63,7 +68,7 @@ async function midiDeviceSend(notes) {
 }
 
 
-Vue.createApp({
+createApp({
 	data() {
 		return {
 			options: Object.assign({}, DEFAULT_OPTIONS),
@@ -650,7 +655,9 @@ Vue.createApp({
 			return `hsl(${h}, ${s}%, ${l}%)`;
 		},
 	},
-}).use(Vuetify.createVuetify({
+}).use(createVuetify({
+	components,
+	directives,
 	theme: {
 		defaultTheme: 'light' // or dark
 	}

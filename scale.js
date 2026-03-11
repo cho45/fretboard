@@ -1,5 +1,10 @@
-// import Note from 'https://cdn.jsdelivr.net/npm/@tonaljs/note@4.10.0/+esm';
-import { Key, Pcset, Chord, ChordType, Interval, Note, Scale, ScaleType } from 'https://cdn.jsdelivr.net/npm/tonal@5.1.0/+esm';
+import { createApp } from 'vue';
+import { createVuetify } from 'vuetify';
+import * as components from 'vuetify/components';
+import * as directives from 'vuetify/directives';
+import 'vuetify/styles';
+import '@mdi/font/css/materialdesignicons.css';
+import { Key, Pcset, Chord, ChordType, Interval, Note, Scale, ScaleType } from 'tonal';
 
 const scaleWeight = new Map();
 scaleWeight.set("major", 1);
@@ -57,7 +62,7 @@ function searchScales (allNotes) {
 	return ret;
 }
 
-Vue.createApp({
+createApp({
 	data() {
 		return {
 			tab: 'chords',
@@ -226,7 +231,9 @@ Vue.createApp({
 			return `hsl(${h}, ${s}%, ${l}%)`;
 		}
 	},
-}).use(Vuetify.createVuetify({
+}).use(createVuetify({
+	components,
+	directives,
 	theme: {
 		defaultTheme: 'light' // or dark
 	}

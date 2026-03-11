@@ -24,7 +24,7 @@
     "@tonaljs/scale-type": "^4.9.2",
     "tonal": "^5.1.0",
     "vue": "^3.5.30",
-    "vuetify": "^4.0.1"
+    "vuetify": "^3.7.11"
   },
   "devDependencies": {
     "@playwright/test": "^1.58.2",
