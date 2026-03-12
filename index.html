@@ -1,183 +1,93 @@
 <!DOCTYPE html>
 <html>
-	<head>
-		<meta charset="utf-8">
-		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-
-		<title>Fretboard</title>
-
-		<link rev="made" href="mailto:cho45@lowreal.net">
-		<link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
-		<script src="script.js" type="module" defer></script>
-		<style>
-			#fretboard-all .dot-text {
-				fill: #fff;
-			}
-
-			.dot-text {
-				fill: #999;
-			}
-
-			.dot-in-box .dot-text {
-				fill: #fff;
-			}
-
-			img.note {
-				margin: 0 2px;
-			}
-
-			kbd {
-				font-family: Roboto;
-				font-size: 80%;
-				margin: 0 0.5em;
-				padding: 0.2em 0.5em;
-				border: 1px solid #ccc;
-				border-radius: 3px;
-				font-size: 90%;
-			}
-
-			.bpm .v-text-field input {
-				font-size: 200%;
-			}
-
-			.v-btn {
-				min-width: 50px;
-				margin: 5px;
-			}
-
-			.flash {
-				animation-duration: 0.1s;
-				animation-name: a-flash;
-				animation-iteration-count: 1;
-				animation-timing-function: linear;
-			}
-
-			@keyframes a-flash {
-				0% {
-					opacity: 0;
-					background: #000000;
-				}
-
-				90% {
-					opacity: 0;
-					background: #000000;
-				}
-
-				100% {
-					opacity: 1;
-					background: #ffffff;
-				}
-			}
-
-
-			@media (prefers-reduced-motion: reduce) {
-				.flash {
-					animation: none;
-				}
-			}
-
-
-			.keyboard-shortcut {
-				display: none;
-			}
-
-			@media (hover: hover) and (pointer: fine) {
-				.keyboard-shortcut {
-					display: block;
-				}
-			}
-		</style>
-	</head>
-	<body>
-		<div id="app">
-			<v-app id="inspire">
-				<!-- v-navigation-drawer
-					model-value
-					class="pt-4"
-					color="grey-lighten-3"
-					rail
-					>
-					<v-avatar
-						v-for="n in 6"
-						:key="n"
-						:color="`grey-${n === 1 ? 'darken' : 'lighten'}-1`"
-						:size="n === 1 ? 36 : 20"
-						class="d-block text-center mx-auto mb-9"
-						></v-avatar>
-				</v-navigation-drawer -->
-
-				<v-main style="">
-					<v-container>
-						<v-container style="width: 1600px">
-							<v-row>
-								<v-col cols="12" md="2">
-									<v-select
-										label="Root"
-										v-model="root"
-										:items="roots"
-										return-object
-										density="comfortable"
-										prepend-icon="mdi-music-accidental-double-flat"
-										></v-select>
-								</v-col>
-								<v-col cols="12" md="4">
-									<v-btn variant="tonal" @click="prevRoot()">Prev Root <kbd>↑</kbd></v-btn>
-									<v-btn variant="tonal" @click="nextRoot()">Next Root <kbd>↓</kbd></v-btn>
-								</v-col>
-								<v-col cols="12" md="4">
-									<v-btn variant="tonal" @click="prevBox()">Prev Box <kbd>←</kbd></v-btn>
-									<v-btn variant="tonal" @click="nextBox()">Next Box <kbd>→</kbd></v-btn>
-								</v-col>
-								<v-col cols="12" md="2">
-									<v-checkbox v-model="useOpenString" label="Use Open String"></v-checkbox>
-								</v-col>
-							</v-row>
-						</v-container>
-						<v-container style="width: 1600px">
-							<figure id="fretboard-all"></figure>
-						</v-container>
-						<h1>
-							{{boxForm}} Form
-						</h1>
-						<v-container>
-							<v-row wrap>
-								<v-col cols="6">
-									<h2>{{root}} Major Scale / William Leavitt/Berklee system</h2>
-									<figure id="fretboard-major2"></figure>
-								</v-col>
-								<v-col cols="6">
-									<h2>{{root}} Major Scale / William Leavitt/Berklee system (2)</h2>
-									<figure id="fretboard-major3"></figure>
-								</v-col>
-								<v-col cols="6">
-									<h2>{{root}} Major Scale /  Pentatonic+4+7</h2>
-									<figure id="fretboard-major"></figure>
-								</v-col>
-								<v-col cols="6">
-									<h2>{{root}} Major Pentatonic Scale</h2>
-									<figure id="fretboard-pentatonic"></figure>
-								</v-col>
-								<v-col cols="6">
-									<h2>{{root}} Major 1357</h2>
-									<figure id="fretboard-1357"></figure>
-								</v-col>
-							</v-row>
-						</v-container>
-
-
-						<!-- v-select
-							label="Scale"
-							v-model="scale"
-							:items="scales"
-							return-object
-							single-line
-							prepend-icon="mdi-music-clef-treble"
-							></v-select>
-						</div -->
-					</v-container>
-				</v-main>
-
-			</v-app>
-		</div>
-	</body>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fretboard Tools</title>
+    <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@latest/css/materialdesignicons.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            width: 100%;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 40px;
+            font-weight: 300;
+            font-size: 3rem;
+        }
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        .menu-item {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            text-decoration: none;
+            color: inherit;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+        .menu-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+        }
+        .icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: #2196F3;
+        }
+        .title {
+            font-size: 1.5rem;
+            font-weight: 500;
+            margin-bottom: 10px;
+            color: #1976D2;
+        }
+        .description {
+            font-size: 0.95rem;
+            color: #666;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Fretboard Tools</h1>
+        <div class="menu-grid">
+            <a href="chord.html" class="menu-item">
+                <i class="mdi mdi-music-note-eighth icon"></i>
+                <div class="title">Chord Search</div>
+                <div class="description">フレットボード上のポジションからコード名を逆引き検索します。</div>
+            </a>
+            <a href="position.html" class="menu-item">
+                <i class="mdi mdi-guitar-acoustic icon"></i>
+                <div class="title">Position / Form</div>
+                <div class="description">指定したキーやスケールの指板上のポジションや、CAGEDフォーム等を確認します。</div>
+            </a>
+            <a href="scale.html" class="menu-item">
+                <i class="mdi mdi-music-clef-treble icon"></i>
+                <div class="title">Scale Search</div>
+                <div class="description">使用されている音やコード進行から、適合するスケールを検索・提案します。</div>
+            </a>
+        </div>
+    </div>
+</body>
 </html>

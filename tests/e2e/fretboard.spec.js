@@ -1,8 +1,15 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Fretboard App', () => {
-	test('index.html should render fretboard', async ({ page }) => {
+	test('index.html should render menu', async ({ page }) => {
 		await page.goto('/');
+		await expect(page).toHaveTitle(/Fretboard Tools/);
+		const menuItems = page.locator('.menu-item');
+		await expect(menuItems).toHaveCount(3);
+	});
+
+	test('position.html should render fretboard', async ({ page }) => {
+		await page.goto('/position.html');
 		await expect(page).toHaveTitle(/Fretboard/);
 		// Check if the svg fretboard is rendered
 		const fretboard = page.locator('#fretboard-all svg');

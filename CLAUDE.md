@@ -8,19 +8,21 @@ This is a guitar fretboard visualization and search tool implemented as a pure H
 
 ## Key Features
 
-1. **CAGED System Visualization** (index.html) - Displays CAGED system positions and pentatonic scales
-2. **Chord Lookup** (chord.html) - Search for chords based on fretboard positions
-3. **Scale Lookup** (scale.html) - Find scales from notes or chords
+1. **Menu** (index.html) - Entry point to all tools
+2. **CAGED System Visualization** (position.html) - Displays CAGED system positions and pentatonic scales
+3. **Chord Lookup** (chord.html) - Search for chords based on fretboard positions
+4. **Scale Lookup** (scale.html) - Find scales from notes or chords
 
 ## Architecture
 
 This is a client-side only application with no build process. Files are served directly:
 
-- **No build tools** - Direct HTML/JS/CSS files
-- **Libraries loaded via CDN**:
+- **Vite** - Used for development and build process
+- **Libraries**:
   - fretboard.js@0.2.13 - Main fretboard visualization library
-  - tonal@5.1.0 - Music theory calculations
-  - Vue.js (local copy in lib/vue.global.js)
+  - tonal.js - Music theory calculations
+  - Vue.js 3 - UI framework
+  - Vuetify 3 - UI component library
 
 ## Development Workflow
 

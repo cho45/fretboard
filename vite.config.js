@@ -16,8 +16,9 @@ export default defineConfig({
 	build: {
 		rollupOptions: {
 			input: {
-				main: resolve(__dirname, 'index.html'),
+				index: resolve(__dirname, 'index.html'),
 				chord: resolve(__dirname, 'chord.html'),
+				position: resolve(__dirname, 'position.html'),
 				scale: resolve(__dirname, 'scale.html'),
 			},
 		},
